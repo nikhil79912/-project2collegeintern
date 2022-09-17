@@ -35,7 +35,7 @@ const createIntern = async function (req, res) {
       return res.status(400).send({ status: false, message: "mobile is in wrong format" });
 
     if (!mobile.match(/^\d{10}$/))
-      return res.status(400).send({ status: false, message: "mobile is invalid" });
+      return res.status(400).send({ status: false, message: "mobile no is invalid" });
 
     let internEmail = await internModel.findOne({ $or: [{ email: email }, { mobile: mobile }], });
 

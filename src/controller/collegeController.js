@@ -49,33 +49,27 @@ const createCollege = async function (req, res) {
     if (!logoLink)
       return res.status(400).send({ status: false, message: "Logo link is required" });
 
-    if (!isValidValue(logoLink))
-      return res.status(400).send({ status: false, message: "Logo link is in wrong format" });
+    if (!isValidValue(logoLink)||(!logoLink.match(/^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%.\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%\+.~#?&\/=]*)$/)))
+      return res.status(400).send({ status: false, message: "Logo link is not valid format" });
 
-
-    //for check logo link we use axios
-
-    let check = false;
-    await axios.get(logoLink).then((response) => {
-
-      if (response.status == 200 || response.status == 201) {
-        if (response.headers["content-type"].startsWith("image/")) check = true;
-
-      }
-    })
-      .catch((error) => { });
-    if (check == false) return res.status(400).send({ status: false, message: "Please give valid logo link" });
+      
 
     let checkName = await collegeModel.findOne({ name: name });
     if (checkName) return res.status(400).send({ status: false, message: "College Name is already exist" });
-
-    let college = await collegeModel.create(data);
+    let College= await collegeModel.create(data);
+    let college= {
+      name:College.name,
+      fullName:College.fullName,
+      logoLink:College.logoLink,
+      isDeleted:College.isDeleted
+    }
     return res.status(201).send({ status: true, data: college });
 
   } catch (err) {
     return res.status(500).send({ status: false, message: err.message });
   }
 };
+    
 
 
 const getCollegeDetails = async function (req, res) {
@@ -92,11 +86,11 @@ const getCollegeDetails = async function (req, res) {
 
 
     // Copying name, fullName & logoLink from college to a new object collegeDetails
-    const collegeDetails = {
-      Name: college.name,
-      FullName: college.fullName,
-      LogoLink: college.logoLink,
-    };
+    // const collegeDetails = {
+    //   Name: college.name,
+    //   FullName: college.fullName,
+    //   LogoLink: college.logoLink,
+    // };
 
 
     // Extracting _id from college & using it to get interns
@@ -104,11 +98,16 @@ const getCollegeDetails = async function (req, res) {
     
     const internData = await internModel.find({ collegeId: getCollegeId, isDeleted: false })
       .select({ name:1,email:1,mobile:1 });
-
-    if (internData.length == 0)
+      if (internData.length == 0)
       return res.status(400).send({ status: false, message: "No interns for this college" });
-    const data = { collegeDetails, interns: internData };
-
+      let fetchDetails= {
+        Name: college.name,
+      FullName: college.fullName,
+      LogoLink: college.logoLink,
+        interns:internData
+      }
+    
+      const data = { fetchDetails };
 
     return res.status(200).send({ status: true, data: data });
 
@@ -116,6 +115,8 @@ const getCollegeDetails = async function (req, res) {
     return res.status(500).send({ status: false, message: err.message });
   }
 };
+
+    
 
 module.exports = { createCollege, getCollegeDetails, isValid, isValidValue };
 
